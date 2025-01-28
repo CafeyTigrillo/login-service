@@ -1,4 +1,5 @@
 const { LoginUser } = require('../models/authModel');
+
 exports.createLoginUser = async (req, res) => {
   try {
     const { user_id, username, password } = req.body;
