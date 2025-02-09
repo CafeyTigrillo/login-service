@@ -11,7 +11,7 @@ const app = express();
 
 const eurekaClient = new Eureka({
   instance: {
-    app: 'auth-service',  
+    app: 'auth-service',
     hostName: 'localhost',
     ipAddr: '127.0.0.1',
     port: {
@@ -19,18 +19,39 @@ const eurekaClient = new Eureka({
       '@enabled': true,
     },
     vipAddress: 'auth-service',
+    statusPageUrl: `http://localhost:${process.env.PORT || 3002}/info`,
+    healthCheckUrl: `http://localhost:${process.env.PORT || 3002}/health`,
+    homePageUrl: `http://localhost:${process.env.PORT || 3002}`,
     dataCenterInfo: {
       '@class': 'com.netflix.appinfo.InstanceInfo$DefaultDataCenterInfo',
       name: 'MyOwn',
     },
     registerWithEureka: true,
     fetchRegistry: true,
+    leaseRenewalIntervalInSeconds: 30,
+    leaseExpirationDurationInSeconds: 90,
   },
   eureka: {
-    host: 'localhost',  
-    port: 8761,        
+    host: 'localhost',
+    port: 8761,
     servicePath: '/eureka/apps/',
+    maxRetries: 10,
+    requestRetryDelay: 2000,
+    heartbeatInterval: 5000,
+    registryFetchInterval: 5000,
   },
+});
+
+app.get('/health', (req, res) => {
+  res.json({ status: 'UP' });
+});
+
+app.get('/info', (req, res) => {
+  res.json({
+    app: 'auth-service',
+    status: 'UP',
+    timestamp: new Date()
+  });
 });
 
 app.use(express.json());
@@ -43,7 +64,9 @@ const PORT = process.env.PORT || 3002;
 app.listen(PORT, async () => {
   try {
     await sequelize.sync({ force: false });
-    eurekaClient.start();
+    eurekaClient.start(error => {
+      console.log(error || 'Eureka registration complete');
+    });
     console.log(`Login server running at http://localhost:${PORT}`);
   } catch (error) {
     console.error("Database connection error:", error);
@@ -51,6 +74,8 @@ app.listen(PORT, async () => {
 });
 
 process.on('SIGINT', () => {
-  eurekaClient.stop();
-  process.exit();
+  eurekaClient.stop(error => {
+    console.log('Deregistered from Eureka');
+    process.exit();
+  });
 });
