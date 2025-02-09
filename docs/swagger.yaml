@@ -1,0 +1,94 @@
+openapi: 3.0.0
+info:
+  title: Login Microservice API
+  description: API for user authentication and login functionality
+  version: 1.0.0
+  contact:
+    name: Support Team
+    email: support@example.com
+
+servers:
+  - url: http://localhost:3002
+    description: Local development server
+
+paths:
+  /auth/login:
+    post:
+      summary: Authenticate user and start a session
+      description: Verifies the user's email and password. If credentials are correct, a success message is returned.
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: user@example.com
+                  description: User's registered email address
+                password:
+                  type: string
+                  format: password
+                  example: MySecureP@ssw0rd
+                  description: User's password
+      responses:
+        200:
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Login successful
+        400:
+          description: User does not have an assigned role
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: User does not have an assigned role.
+        401:
+          description: Incorrect password
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Incorrect password
+        404:
+          description: User not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: User not found
+        500:
+          description: Server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Server error
+                  error:
+                    type: string
+                    example: Internal server error
