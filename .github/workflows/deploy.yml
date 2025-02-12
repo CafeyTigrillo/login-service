@@ -1,0 +1,49 @@
+name: Deploy Login-Service
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18' # Puedes cambiar la versión según sea necesario
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run tests
+        run: npm test
+
+      - name: Build Docker image
+        run: |
+          docker build -t richard28/login-service:latest .
+
+      - name: Login to DockerHub
+        run: echo "${{ secrets.DOCKERHUB_PASSWORD }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
+
+      - name: Push Docker image to DockerHub
+        run: docker push richard28/login-service:latest
+
+      - name: Deploy to EC2
+        run: |
+          echo "${{ secrets.AWS_SSH_KEY }}" > /tmp/key.pem
+          chmod 400 /tmp/key.pem
+          ssh -o StrictHostKeyChecking=no -i /tmp/key.pem ${{ secrets.AWS_USER }}@${{ secrets.AWS_HOST }} << 'EOF'
+            docker pull richard28/login-service:latest
+            
+            docker-compose down
+            
+            docker-compose up -d --remove-orphans
+            
+            exit
+          EOF
