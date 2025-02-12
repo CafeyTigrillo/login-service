@@ -8,21 +8,22 @@ const cors = require("cors");
 const Eureka = require('eureka-js-client').Eureka;
 
 const app = express();
-const PORT = 3002;
+const PORT = process.env.PORT || 3002;
+const HOST = "0.0.0.0";
 
 const eurekaClient = new Eureka({
   instance: {
     app: 'auth-service',
-    hostName: 'ec2-13-216-183-248.compute-1.amazonaws.com',
+    hostName: 'ec2-13-216-183-248.compute-1.amazonaws.com',  
     ipAddr: '13.216.183.248',
     port: {
       '$': PORT,
       '@enabled': true,
     },
     vipAddress: 'auth-service',
-    statusPageUrl: `http://ec2-13-216-183-248.compute-1.amazonaws.com:${PORT}/info`,
-    healthCheckUrl: `http://ec2-13-216-183-248.compute-1.amazonaws.com:${PORT}/health`,
-    homePageUrl: `http://ec2-13-216-183-248.compute-1.amazonaws.com:${PORT}`,
+    statusPageUrl: `http://13.216.183.248:${PORT}/info`, 
+    healthCheckUrl: `http://13.216.183.248:${PORT}/health`, 
+    homePageUrl: `http://13.216.183.248:${PORT}`,
     dataCenterInfo: {
       '@class': 'com.netflix.appinfo.InstanceInfo$DefaultDataCenterInfo',
       name: 'MyOwn',
@@ -33,7 +34,7 @@ const eurekaClient = new Eureka({
     leaseExpirationDurationInSeconds: 90,
   },
   eureka: {
-    host: 'ec2-13-216-183-248.compute-1.amazonaws.com',
+    host: '13.216.183.248', 
     port: 8761,
     servicePath: '/eureka/apps/',
     maxRetries: 10,
@@ -61,13 +62,13 @@ app.use(cors());
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 app.use("/auth", authRoutes);
 
-app.listen(PORT, async () => {
+app.listen(PORT, HOST, async () => { 
   try {
     await sequelize.sync({ force: false });
     eurekaClient.start(error => {
       console.log(error || 'Eureka registration complete');
     });
-    console.log(`Login server running at http://ec2-13-216-183-248.compute-1.amazonaws.com:${PORT}`);
+    console.log(`Login server running at http://13.216.183.248:${PORT}`);
   } catch (error) {
     console.error("Database connection error:", error);
   }
